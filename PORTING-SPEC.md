@@ -134,7 +134,12 @@ renders drawn content as photographic texture; the manifest summary says so). Ma
 precision lane, `mlx-community/FlashVSR-v1.1-bf16` (default, 3.5 GB) and `-fp32` (parity, 7.0 GB) — this repo's
 `oracle/convert_weights.py --lane` output from `JunhaoZhuang/FlashVSR-v1.1 @ 27561b18` (pinned in each lane's
 `config.json`). The bf16 lane is bit-identical to the fp32 lane cast at load (`flashvsr-smoke check-lanes`: 899
-parameters, 0 differ); S0 and S1 re-pass on the fp32 lane files exactly as published. The driver PIL-bicubic-upscales each decoded frame, edge-pads to multiples of 128, streams through
+parameters, 0 differ); S0 and S1 re-pass on the fp32 lane files exactly as published. **Published-artifact
+verified** (2026-10-04): every LFS file's Hub sha256 equals the staged bytes (8/8, both lanes); a fresh, anonymous
+engine run on an EMPTY model store (`flashvsr-smoke engine … --store <dir>`) materialized the bf16 lane from
+mlx-community, wrote the store marker, and produced frames identical to the staged-lane run (48/48 decoded frames,
+max |Δ| 0; compressed samples byte-identical). Grouped in the mlx-community collection "FlashVSR v1.1 (Swift/MLX
+port)". The driver PIL-bicubic-upscales each decoded frame, edge-pads to multiples of 128, streams through
 `FlashVSRStream` (25-frame start, then 8 per chunk), crops back, and pairs every output with its own source PTS.
 
 **Engine drive** (`flashvsr-smoke engine`, the real `MLXServeEngine`, one clip per process; every frame kept —

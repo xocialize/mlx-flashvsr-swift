@@ -20,7 +20,9 @@ func runEngine(_ args: [String]) async throws {
                                     seed: flag("--seed", args).flatMap(UInt64.init) ?? 0,
                                     weightsDirectory: store == nil ? URL(fileURLWithPath: args[3]) : nil)
     let input = try Data(contentsOf: URL(fileURLWithPath: args[1]))
-    let engine = MLXServeEngine()
+    // --store is the fresh-machine path: anonymous Hub access (the lanes are public), so no Keychain read — an
+    // unsigned CLI touching a Keychain item blocks on an OS access prompt
+    let engine = store == nil ? MLXServeEngine() : MLXServeEngine(hfTokenProvider: { nil })
     if let store {
         try FileManager.default.createDirectory(at: store, withIntermediateDirectories: true)
         await engine.useModelStore(ModelStore(root: store))
