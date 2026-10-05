@@ -74,20 +74,27 @@ func runFrames(inDir: String, outDir: String, weights: URL, dtypes: FlashVSRDTyp
     let gpuBefore = agxUtilization(), thermalBefore = ProcessInfo.processInfo.thermalState
     var written = 0, nanCount = 0
     var chunkS: [Double] = []
+    var produced: [MLXArray] = []
     var t = DispatchTime.now().uptimeNanoseconds
+    // The timed region is the pipeline alone (chunks are evaluated inside `run`): PNG encoding happens after it, so
+    // run_s compares like with like against the upstream torch runner, whose run_s also excludes writing frames.
     let (_, runS) = try timed {
         try pipe.run(lq: lq, noise: noise, options: options) { ch in
             let now = DispatchTime.now().uptimeNanoseconds
-            chunkS.append(Double(now - t) / 1e9); t = now
+            chunkS.append(Double(now - t) / 1e9)
             let fr = ch.frames!
-            nanCount += isNaN(fr).asType(.int32).sum().item(Int.self)
-            for i in 0 ..< fr.dim(1) {
-                try writePNG((fr[0, i] + 1) / 2, String(format: "%@/f%04d.png", outDir, written))
-                written += 1
-            }
+            produced.append(fr)
             note(String(format: "  chunk %d: %d frames in %.2f s  (phys %.2f GB, MLX peak %.2f GB)", ch.index,
                         fr.dim(1), chunkS.last!, Double(physFootprint().current) / 1e9,
                         Double(Memory.peakMemory) / 1e9))
+            t = DispatchTime.now().uptimeNanoseconds
+        }
+    }
+    for fr in produced {
+        nanCount += isNaN(fr).asType(.int32).sum().item(Int.self)
+        for i in 0 ..< fr.dim(1) {
+            try writePNG((fr[0, i] + 1) / 2, String(format: "%@/f%04d.png", outDir, written))
+            written += 1
         }
     }
     let phys = physFootprint()

@@ -108,21 +108,38 @@ func probeAttention() throws {
         note(compare("bf16 dense  vs fp32", FlashVSRAttentionOps.dense(q: q, k: k, v: v, blockMask: m, heads: heads), ref).line)
         note(compare("bf16 kernel vs fp32", FlashVSRAttentionOps.kernel(q: q, k: k, v: v, blockMask: m, heads: heads), ref).line)
     }
-    // timing on a 1280×768 chunk-1 shape: Lq = 2·48·80 = 7680 (60 blocks), Lk = 4 slices = 240 blocks, 12 heads
-    let heads = 12, hd = 128, lqB = 60, lkB = 240
-    for (dt, density) in [(DType.bfloat16, 0.5), (.bfloat16, 0.22)] {
+    // accuracy of every kernel width against dense (fp32, with an empty query block)
+    for sg in [4, 8, 16] {
+        let heads = 2, hd = 128, lqB = 12, lkB = 36
+        let q = MLXRandom.normal([1, lqB * 128, heads * hd]), k = MLXRandom.normal([1, lkB * 128, heads * hd])
+        let v = MLXRandom.normal([1, lkB * 128, heads * hd])
+        var m = (MLXRandom.uniform(0 ..< 1, [heads, lqB, lkB]) .< Float(0.4)).asType(.float32)
+        m[1, 3] = MLXArray.zeros([lkB])
+        note(compare("kernel sg\(sg) fp32", FlashVSRAttentionOps.kernel(q: q, k: k, v: v, blockMask: m, heads: heads,
+                                                                        simdgroups: sg),
+                     FlashVSRAttentionOps.dense(q: q, k: k, v: v, blockMask: m, heads: heads)).line)
+    }
+    // timing on the real chunk shapes (12 heads, bf16): (label, query blocks, key blocks, density)
+    let shapes: [(String, Int, Int, Double)] = [("720p c0", 180, 180, 0.67), ("720p c1+", 60, 240, 0.5),
+                                                ("1152p c1+", 135, 540, 0.22)]
+    for (label, lqB, lkB, density) in shapes {
+        let heads = 12, hd = 128, dt = DType.bfloat16
         let q = MLXRandom.normal([1, lqB * 128, heads * hd]).asType(dt)
         let k = MLXRandom.normal([1, lkB * 128, heads * hd]).asType(dt)
         let v = MLXRandom.normal([1, lkB * 128, heads * hd]).asType(dt)
         let m = (MLXRandom.uniform(0 ..< 1, [heads, lqB, lkB]) .< Float(density)).asType(.float32)
         eval(q, k, v, m)
-        for (name, f) in [("dense", { FlashVSRAttentionOps.dense(q: q, k: k, v: v, blockMask: m, heads: heads) }),
-                          ("kernel", { FlashVSRAttentionOps.kernel(q: q, k: k, v: v, blockMask: m, heads: heads) })] {
+        var arms: [(String, () -> MLXArray)] = [("dense", { FlashVSRAttentionOps.dense(q: q, k: k, v: v, blockMask: m, heads: heads) })]
+        for sg in [4, 8, 16] {
+            arms.append(("kernel sg\(sg)", { FlashVSRAttentionOps.kernel(q: q, k: k, v: v, blockMask: m, heads: heads,
+                                                                         simdgroups: sg) }))
+        }
+        for (name, f) in arms {
             eval(f())
             var ts: [Double] = []
             for _ in 0 ..< 3 { let (o, t) = timed { let o = f(); eval(o); return o }; _ = o; ts.append(t) }
-            note(String(format: "  %@ %@ density %.2f: %.1f ms (min of 3)", name as NSString,
-                        "\(dt)" as NSString, density, 1000 * ts.min()!))
+            note(String(format: "  %-10@ %-10@ density %.2f: %7.1f ms (min of 3)", label as NSString, name as NSString,
+                        density, 1000 * ts.min()!))
         }
     }
 }

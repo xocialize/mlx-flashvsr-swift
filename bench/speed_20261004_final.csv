@@ -1,0 +1,5 @@
+arm,kind,target,gpu,thermal,frames,run_s,s_per_frame,steady_s_per_frame,peak_phys_gb,mlx_peak_gb
+a720c,mlx,1280x768,0,nominal,45,22.56,0.501,0.549,37.4,17.3
+d720c,mlx,1280x768,0,nominal,45,22.93,0.509,0.559,37.4,17.3
+e1080f,engine e2e,,0,nominal,48,102.63,2.138,,32.48,29.18
+e720f,engine e2e,,0,nominal,48,34.67,0.722,,17.28,14.8

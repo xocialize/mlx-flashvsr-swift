@@ -40,7 +40,7 @@ converted lane directory.
 ## Install
 
 ```swift
-.package(url: "https://github.com/xocialize/mlx-flashvsr-swift", from: "0.1.1"),
+.package(url: "https://github.com/xocialize/mlx-flashvsr-swift", from: "0.2.0"),
 // products: "FlashVSRMLX" (core) and/or "MLXFlashVSR" (engine package)
 ```
 
@@ -82,7 +82,10 @@ Parity, quality, memory and open items are in [`PORTING-SPEC.md`](PORTING-SPEC.m
 - **Memory** (through MLXEngine, bf16, process peak): 19.1 GB at 1280×768 output, 33.7 GB at 1920×1152. Streaming
   keeps it independent of clip length; the package declares the measured scaling and refuses outputs above
   1920×1152 (bf16) / 1280×768 (fp32) before loading.
-- **Speed.** The Metal block-sparse kernel is 2.2× faster end to end than dense attention at 1920×1152.
+- **Speed** (idle M5 Max, bf16, s per output frame, pipeline only): **0.50 at 1280×768 and 1.33 at 1920×1152** —
+  1.6× and 2.3× upstream's PyTorch-MPS run on the same machine (0.80 / 3.09). Through MLXEngine end to end (decode,
+  upscale, HEVC encode): 0.72 and ~2.1. At 1920×1152 the Metal block-sparse kernel is 2.2× the dense path; at
+  1280×768, where FlashVSR keeps 50–67 % of key blocks, dense is as fast, and the default picks per call.
 
 ## Licence
 

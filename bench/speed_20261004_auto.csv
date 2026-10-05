@@ -1,0 +1,11 @@
+arm,kind,target,gpu,thermal,frames,run_s,s_per_frame,steady_s_per_frame,peak_phys_gb,mlx_peak_gb
+a1080a,mlx,1920x1152,0,nominal,45,61.31,1.363,1.333,71.3,34.4
+a1080b,mlx,1920x1152,0,nominal,45,58.74,1.305,1.285,71.3,34.4
+a720a,mlx,1280x768,0,nominal,45,28.64,0.636,0.781,37.2,17.3
+a720b,mlx,1280x768,0,nominal,45,23.54,0.523,0.566,37.2,17.3
+d1080a,mlx,1920x1152,0,nominal,45,129.81,2.885,3.221,71.8,34.4
+d1080b,mlx,1920x1152,0,nominal,45,131.25,2.917,3.284,71.8,34.4
+d720a,mlx,1280x768,0,nominal,45,22.5,0.5,0.547,37.4,17.3
+d720b,mlx,1280x768,0,nominal,45,22.83,0.507,0.557,37.4,17.3
+e1080,engine e2e,,3,nominal,48,98.51,2.052,,32.52,29.2
+e720,engine e2e,,0,nominal,48,33.39,0.696,,17.14,14.8

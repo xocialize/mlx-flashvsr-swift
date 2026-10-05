@@ -8,25 +8,36 @@ import Foundation
 import MLX
 
 enum BlockSparseKernel {
-    static let source = """
+    /// The kernel body for `sg` simdgroups per threadgroup: each simdgroup owns 8 query rows, so a threadgroup covers
+    /// BQ = 8·sg rows of one 128-query block, and every selected K/V tile staged in threadgroup memory is shared by all
+    /// of them. sg = 16 covers the whole block, reading each selected K/V block once per (query block, head) instead of
+    /// 128/BQ times — K/V traffic is what bounded the sg = 4 version (measured slower than dense on an idle GPU).
+    /// Threadgroup memory: K and V tiles 16 KB (fp32, 16 keys) + 0.75 KB per simdgroup (S/P scratch, one aux buffer that
+    /// serves Q staging, the rescale diagonal and output staging in turn, row max and sum) — 28 KB at sg = 16.
+    static func source(simdgroups sg: Int) -> String {
+        precondition([4, 8, 16].contains(sg))
+        let bq = 8 * sg, qt = 128 / bq, nt = 32 * sg
+        return """
         constexpr int D = 128;
         constexpr int BK = 16;
+        constexpr int SG = \(sg);
+        constexpr int QT = \(qt);
+        constexpr int NT = \(nt);
         const uint sg = simdgroup_index_in_threadgroup;
         const uint lane = thread_index_in_simdgroup;
         const uint tid = thread_index_in_threadgroup;
         const uint3 tgp = threadgroup_position_in_grid;
         const int Lq = meta[0], Lk = meta[1], NQ = meta[2], NKB = meta[3];
         const int h = int(tgp.y);
-        const int qb = int(tgp.x) / 4, qsub = int(tgp.x) % 4;
-        const int row0 = qb * 128 + qsub * 32 + int(sg) * 8;
+        const int qb = int(tgp.x) / QT, qsub = int(tgp.x) % QT;
+        const int row0 = qb * 128 + qsub * (8 * SG) + int(sg) * 8;
 
         threadgroup float Ks[BK * D];
         threadgroup float Vs[BK * D];
-        threadgroup float scr[4][8 * 16];
-        threadgroup float dg[4][64];
-        threadgroup float mrow[4][8];
-        threadgroup float lrow[4][8];
-        threadgroup float stage[4][64];
+        threadgroup float scr[SG][8 * 16];
+        threadgroup float aux[SG][64];
+        threadgroup float mrow[SG][8];
+        threadgroup float lrow[SG][8];
 
         const device T* qh = q + size_t(h) * size_t(Lq) * D;
         const device T* kh = k + size_t(h) * size_t(Lk) * D;
@@ -44,10 +55,10 @@ enum BlockSparseKernel {
         simdgroup_float8x8 Qt[16];
         for (int t = 0; t < 16; ++t) {
             for (int e = int(lane); e < 64; e += 32) {
-                stage[sg][e] = float(qh[size_t(row0 + e / 8) * D + t * 8 + (e % 8)]);
+                aux[sg][e] = float(qh[size_t(row0 + e / 8) * D + t * 8 + (e % 8)]);
             }
             simdgroup_barrier(mem_flags::mem_threadgroup);
-            simdgroup_load(Qt[t], stage[sg], 8);
+            simdgroup_load(Qt[t], aux[sg], 8);
             simdgroup_barrier(mem_flags::mem_threadgroup);
         }
         simdgroup_float8x8 Ot[16];
@@ -62,7 +73,7 @@ enum BlockSparseKernel {
             for (int sub = 0; sub < 128 / BK; ++sub) {
                 const int key0 = kb * 128 + sub * BK;
                 threadgroup_barrier(mem_flags::mem_threadgroup);
-                for (int e = int(tid); e < BK * D; e += 128) {
+                for (int e = int(tid); e < BK * D; e += NT) {
                     const size_t g = size_t(key0 + e / D) * D + (e % D);
                     Ks[e] = float(kh[g]);
                     Vs[e] = float(vh[g]);
@@ -96,17 +107,17 @@ enum BlockSparseKernel {
                 const float alpha = exp(mold - mnew);
                 simdgroup_barrier(mem_flags::mem_threadgroup);
                 for (int i = 0; i < 4; ++i) { scr[sg][r * 16 + c0 + i] = s[i]; }
-                for (int e = int(lane); e < 64; e += 32) { dg[sg][e] = 0.0f; }
+                for (int e = int(lane); e < 64; e += 32) { aux[sg][e] = 0.0f; }
                 simdgroup_barrier(mem_flags::mem_threadgroup);
                 if ((lane % 4) == 0) {
-                    dg[sg][r * 8 + r] = alpha;
+                    aux[sg][r * 8 + r] = alpha;
                     mrow[sg][r] = mnew;
                     lrow[sg][r] = lold * alpha + sum;
                 }
                 simdgroup_barrier(mem_flags::mem_threadgroup);
 
                 simdgroup_float8x8 A, P0, P1;
-                simdgroup_load(A, dg[sg], 8);
+                simdgroup_load(A, aux[sg], 8);
                 simdgroup_load(P0, scr[sg], 16);
                 simdgroup_load(P1, scr[sg] + 8, 16);
                 for (int t = 0; t < 16; ++t) {
@@ -122,34 +133,41 @@ enum BlockSparseKernel {
             }
         }
 
-        for (int e = int(lane); e < 64; e += 32) { dg[sg][e] = 0.0f; }
+        for (int e = int(lane); e < 64; e += 32) { aux[sg][e] = 0.0f; }
         simdgroup_barrier(mem_flags::mem_threadgroup);
-        if ((lane % 4) == 0) { dg[sg][r * 8 + r] = 1.0f / lrow[sg][r]; }
+        if ((lane % 4) == 0) { aux[sg][r * 8 + r] = 1.0f / lrow[sg][r]; }
         simdgroup_barrier(mem_flags::mem_threadgroup);
         simdgroup_float8x8 Dinv;
-        simdgroup_load(Dinv, dg[sg], 8);
+        simdgroup_load(Dinv, aux[sg], 8);
+        simdgroup_barrier(mem_flags::mem_threadgroup);
         for (int t = 0; t < 16; ++t) {
             simdgroup_float8x8 res;
             simdgroup_multiply(res, Dinv, Ot[t]);
-            simdgroup_store(res, stage[sg], 8);
+            simdgroup_store(res, aux[sg], 8);
             simdgroup_barrier(mem_flags::mem_threadgroup);
             for (int e = int(lane); e < 64; e += 32) {
-                oh[size_t(row0 + e / 8) * D + t * 8 + (e % 8)] = T(stage[sg][e]);
+                oh[size_t(row0 + e / 8) * D + t * 8 + (e % 8)] = T(aux[sg][e]);
             }
             simdgroup_barrier(mem_flags::mem_threadgroup);
         }
         """
+    }
 
-    static let kernel = MLXFast.metalKernel(
-        name: "flashvsr_block_sparse_attention",
-        inputNames: ["q", "k", "v", "kidx", "kcnt", "meta", "scale"],
-        outputNames: ["o"],
-        source: source)
+    static let kernels: [Int: MLXFast.MLXFastKernel] = Dictionary(uniqueKeysWithValues: [4, 8, 16].map { sg in
+        (sg, MLXFast.metalKernel(name: "flashvsr_block_sparse_attention_sg\(sg)",
+                                 inputNames: ["q", "k", "v", "kidx", "kcnt", "meta", "scale"],
+                                 outputNames: ["o"], source: source(simdgroups: sg)))
+    })
 }
+
+/// The simdgroups-per-threadgroup the GPU path uses: 16 = one whole 128-query block per threadgroup, measured 1.7–1.8×
+/// faster than 4 on every real chunk shape at identical accuracy (FLASHVSR_KERNEL_SG=4|8|16 overrides, for probes).
+let kernelSimdgroups: Int = ProcessInfo.processInfo.environment["FLASHVSR_KERNEL_SG"].flatMap(Int.init) ?? 16
 
 /// Block-sparse attention on the GPU kernel. q (1, Lq, H·128), k/v (1, Lk, H·128) in window order (128-token blocks),
 /// blockMask (H, Nq, Nk) 0/1. Returns (1, Lq, H·128).
-func kernelBlockAttention(q: MLXArray, k: MLXArray, v: MLXArray, blockMask: MLXArray, heads: Int) -> MLXArray {
+func kernelBlockAttention(q: MLXArray, k: MLXArray, v: MLXArray, blockMask: MLXArray, heads: Int,
+                          simdgroups: Int = kernelSimdgroups) -> MLXArray {
     let (lq, d) = (q.dim(1), q.dim(2))
     let lk = k.dim(1), hd = d / heads
     precondition(q.dim(0) == 1 && hd == 128, "kernel attention: batch 1, head dim 128")
@@ -159,11 +177,11 @@ func kernelBlockAttention(q: MLXArray, k: MLXArray, v: MLXArray, blockMask: MLXA
     let kidx = argSort((.!sel).asType(.int32), axis: -1).asType(.int32)                     // selected first
     func heads3(_ x: MLXArray, _ l: Int) -> MLXArray { x.reshaped([l, heads, hd]).transposed(1, 0, 2) }
     let meta = MLXArray([Int32(lq), Int32(lk), Int32(nq), Int32(nk)])
-    let out = BlockSparseKernel.kernel(
+    let out = BlockSparseKernel.kernels[simdgroups]!(
         [heads3(q[0], lq), heads3(k[0], lk), heads3(v[0], lk), kidx, kcnt, meta,
          MLXArray(1 / Float(hd).squareRoot())],
         template: [("T", q.dtype)],
-        grid: (nq * 4 * 128, heads, 1), threadGroup: (128, 1, 1),
+        grid: (nq * (128 / (8 * simdgroups)) * 32 * simdgroups, heads, 1), threadGroup: (32 * simdgroups, 1, 1),
         outputShapes: [[heads, lq, hd]], outputDTypes: [q.dtype])[0]
     return out.transposed(1, 0, 2).reshaped([1, lq, d])
 }
@@ -176,7 +194,9 @@ public enum FlashVSRAttentionOps {
     public static func gathered(q: MLXArray, k: MLXArray, v: MLXArray, blockMask: MLXArray, heads: Int) -> MLXArray {
         gatheredBlockAttention(q: q, k: k, v: v, blockMask: blockMask, heads: heads)
     }
-    public static func kernel(q: MLXArray, k: MLXArray, v: MLXArray, blockMask: MLXArray, heads: Int) -> MLXArray {
-        kernelBlockAttention(q: q, k: k, v: v, blockMask: blockMask, heads: heads)
+    public static func kernel(q: MLXArray, k: MLXArray, v: MLXArray, blockMask: MLXArray, heads: Int,
+                              simdgroups: Int? = nil) -> MLXArray {
+        kernelBlockAttention(q: q, k: k, v: v, blockMask: blockMask, heads: heads,
+                             simdgroups: simdgroups ?? kernelSimdgroups)
     }
 }

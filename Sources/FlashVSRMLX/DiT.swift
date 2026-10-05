@@ -178,23 +178,36 @@ func draftBlockMaskAndProbs(qW: MLXArray, kW: MLXArray, heads: Int, qSlices: Int
 /// `scoreBudgetBytes` (MLX takes the unfused path at head-dim 128, so scores are materialised: one head at
 /// 1920×1152 would be ~10 GB in one shot). Per-row arithmetic is unchanged by the grouping. On large grids each head
 /// is evaluated before the next is built. Empty query blocks → 0.
-/// Which attention implementation `blockForward` uses (FLASHVSR_ATTN=dense|gathered|kernel):
-///   • `.kernel` — the block-sparse Metal kernel (`SparseAttention.swift`): the GPU default. Exact (fp32 rel ≤ 5e-7
-///     vs dense), 2.2× faster end to end at 1920×1152 (DiT 2.2–3.7×), ~10 % at 1280×768, never slower.
-///   • `.dense` — dense SDPA under the expanded block mask: the reference, and the CPU path.
-///   • `.gathered` — per query block, the selected K/V blocks gathered and run through MLX's fused flash kernel.
-///     Exact, but the gather replicates K/V per query block: 2–4× SLOWER than dense at 1280×768. Kept for study.
+/// Which attention implementation `blockForward` uses (FLASHVSR_ATTN=auto|dense|kernel|gathered):
+///   • `.auto` — the GPU default: per call, the block-sparse kernel when the EXPECTED kept fraction of key blocks is
+///     ≤ `kernelDensityThreshold` (0.45), dense otherwise. The fraction follows from upstream's top-k rule and the geometry
+///     alone — (topk + 1) / (spatial blocks per slice × key blocks), an upper bound once the local window bites — so the
+///     choice needs no GPU sync. Measured on an idle M5 Max (bf16, 12 heads, per attention call; PORTING-SPEC "Speed"):
+///     the kernel costs ~11 µs per SELECTED block pair at every shape, dense 5–10 µs per pair of ALL blocks, so the
+///     crossover sits between 47 % and 57 %: 1280×768 chunk 0 (67 % kept) dense 162 vs kernel 233 ms; later chunks (50 %)
+///     dense 92 vs kernel 81 ms; 1920×1152 later chunks (22 %) dense 709 vs kernel 179 ms.
+///   • `.kernel` — always the block-sparse Metal kernel (`SparseAttention.swift`); exact (fp32 rel ≤ 7e-7 vs dense).
+///   • `.dense` — dense SDPA under the expanded block mask: the reference, and the only CPU path.
+///   • `.gathered` — per query block, selected K/V gathered into MLX's fused kernel. Exact, but the gather replicates
+///     K/V per query block: 2–4× SLOWER than dense. Kept for study.
 public enum FlashVSRAttention: String, Sendable {
-    case dense, gathered, kernel
+    case auto, dense, gathered, kernel
     public static var current: FlashVSRAttention {
         let gpu = Device.defaultDevice().deviceType == .gpu
         if let e = ProcessInfo.processInfo.environment["FLASHVSR_ATTN"], let v = FlashVSRAttention(rawValue: e),
            v == .dense || gpu {
             return v
         }
-        return gpu ? .kernel : .dense
+        return gpu ? .auto : .dense
     }
 }
+
+/// The `.auto` crossover (expected kept fraction of key blocks) — see `FlashVSRAttention`. 0.45, below the measured
+/// 47–57 % band: at 50 % the kernel's 12 % edge on the attention call alone (81 vs 92 ms) was inside run-to-run noise on
+/// the whole DiT (idle-GPU ABBA: later-chunk DiT 3.6–3.7 s kernel vs 3.4–3.6 s dense, one kernel arm at 5.0 s), so at
+/// 1280×768 (67 % / 50 %) every chunk runs dense, and the kernel takes the clearly sparse geometries (1920×1152: 30 % /
+/// 22 % → 2.17× the whole run).
+let kernelDensityThreshold = 0.45
 
 /// Block-sparse attention that does only the selected work — the role of upstream's CUDA `block_sparse_attn_func`.
 /// All 128 queries of a query block share one key selection, so per head the query blocks become a BATCH: each
@@ -501,8 +514,14 @@ public final class FlashVSRDiT: Module {
         let rq = qW.reshaped([b, -1, c.dim]), rk = kW.reshaped([b, -1, c.dim]), rv = vW.reshaped([b, -1, c.dim])
         let bm = maskOverride ?? mask
         let attn: MLXArray
-        switch FlashVSRAttention.current {
-        case .dense: attn = blockMaskedAttention(q: rq, k: rk, v: rv, blockMask: bm, heads: c.numHeads)
+        var mode = FlashVSRAttention.current
+        if mode == .auto {
+            // upstream keeps the (topk+1) largest of s × nk block probabilities per (head, query slice)
+            let expected = min(1, Double(g.topk + 1) / Double(g.s * kW.dim(0)))
+            mode = expected <= kernelDensityThreshold ? .kernel : .dense
+        }
+        switch mode {
+        case .dense, .auto: attn = blockMaskedAttention(q: rq, k: rk, v: rv, blockMask: bm, heads: c.numHeads)
         case .gathered: attn = gatheredBlockAttention(q: rq, k: rk, v: rv, blockMask: bm, heads: c.numHeads)
         case .kernel: attn = kernelBlockAttention(q: rq, k: rk, v: rv, blockMask: bm, heads: c.numHeads)
         }

@@ -107,7 +107,7 @@ peak since stage start, so each includes the resident set). Timing receipts in t
 session's LTX-2 job held the GPU at 93–98 %; the clean re-measure is pending. The first clean fp32 run (before the
 memory fixes, GPU idle) was **34.7 s for 45 frames, 0.77 s/frame** vs upstream torch-MPS bf16 0.865 s/frame.
 
-## Attention implementations (`FLASHVSR_ATTN=dense|gathered|kernel`)
+## Attention implementations (`FLASHVSR_ATTN=auto|dense|kernel|gathered`)
 
 Upstream calls mit-han-lab's CUDA `block_sparse_attn_func`; the oracle stands in dense SDPA under the block mask.
 Three MLX implementations, all gated (isolated attention under the golden mask rel ≤ 6.7e-6 on both goldens, empty
@@ -115,16 +115,46 @@ query blocks included; E2E at or above the floor-relative bar):
 
 | path | how | status |
 |---|---|---|
+| **`auto`** (GPU default) | per attention call: `kernel` when the EXPECTED kept fraction of key blocks — (topk + 1) / (spatial blocks per slice × key blocks), from upstream's top-k rule and the geometry, so no GPU sync — is ≤ 0.45, else `dense` | 1280×768: dense in every chunk (67 % / 50 %); 1920×1152: kernel in every chunk (30 % / 22 %) |
 | `dense` | per head, dense SDPA under the expanded boolean mask, queries grouped to a 512 MB score budget | the reference and the CPU path |
-| `gathered` | per query block, gather the selected K/V blocks (padded) → MLX's fused flash kernel | exact but **2–4× slower** than dense at 1280×768 (interleaved A/B): the gather replicates K/V per query block |
-| **`kernel`** (GPU default) | `SparseAttention.swift`: a Metal block-sparse flash kernel — a threadgroup per 32 query rows of a block, walks only the selected key blocks by index (on-GPU argsort, no copies), 16-key tiles through threadgroup memory, 8×8 simdgroup MMAs, fp32 online softmax | exact (fp32 rel 2.4–4.7e-7 vs dense on random probes); chunk-1-shaped probe (12 heads, 7680 × 30720) **3.3× faster than dense at density 0.5, 4.4× at 0.22**; bf16 ×4 quality identical to dense (X4-Hp −16.34 vs −16.36, X4-Wp −44.10 vs −44.13) |
+| `kernel` | `SparseAttention.swift`: a Metal block-sparse flash kernel — a threadgroup per 128-query block (16 simdgroups × 8 rows sharing one K/V stream), walks only the selected key blocks by index (on-GPU argsort, no copies), 16-key fp32 tiles through threadgroup memory, 8×8 simdgroup MMAs, fp32 online softmax | exact (fp32 rel ≤ 7e-7 vs dense, empty blocks included); ~11 µs per SELECTED block pair at every shape (dense: 5–10 µs per pair of ALL blocks); bf16 ×4 quality identical to dense (X4-Hp −16.34 vs −16.36, X4-Wp −44.10 vs −44.13) |
+| `gathered` | per query block, gather the selected K/V blocks (padded) → MLX's fused flash kernel | exact but **2–4× slower** than dense: the gather replicates K/V per query block. Study only |
 
-Full-run A/B at 1280×768 bf16 (contended GPU, interleaved, 2 reps): chunk-1 DiT 19.2/22.8 s kernel vs 28.3/33.4 s
-dense (1.47×); chunk 0 equal (48/64 s both) — at this size chunk 0 keeps ~67 % of blocks; whole run ~10 % faster.
-At 1920×1152 bf16 (same contention, back to back): **chunk-0 DiT 113.7 s kernel vs 244.1 s dense (2.15×), chunk-1
-40.4 vs 148.2 s (3.67×), whole run 205.9 vs 451.1 s (2.19×)**, same memory (MLX peak 33.1 GB — the decoder),
-no NaN. The topk ratio there is 0.89 → ~22 % of key blocks selected, which is where skipping pays. All of these
-wall-times are contended (GPU 94–99 % busy before each run); the ratios are the finding, the absolutes are not.
+Per attention call (idle M5 Max, bf16, 12 heads, min of 3; `flashvsr-smoke probe-attn`):
+
+| shape | kept | dense | kernel 4 simdgroups (v0.1) | kernel 16 simdgroups |
+|---|---|---|---|---|
+| 1280×768 chunk 0 (180 × 180 blocks) | 67 % | **162 ms** | 409 | 233 |
+| 1280×768 later chunks (60 × 240) | 50 % | 92 | 140 | **81** |
+| 1920×1152 later chunks (135 × 540) | 22 % | 709 | 329 | **179** |
+
+The v0.1 kernel covered 32 queries per threadgroup, so every selected K/V block was re-read four times per query
+block: memory-bound. Widening to the whole block (16 simdgroups) cut that and made it 1.7–1.8× faster everywhere.
+
+## Speed (idle GPU — 2026-10-04 evening)
+
+`bench/speed.sh` gates every arm on an idle GPU (5 consecutive AGX utilization samples < 10 %, the unfiltered ioreg
+form) and `thermalState == .nominal`, runs it in its own process, and interleaves arms ABBA; `bench/speed_summary.py`
+reads the receipts (`bench/speed_20261004*.csv`). M5 Max, bf16 unless noted, the spike's ×4 clips (49 frames
+320×192 → 45 out at 1280×768; 48 frames 480×288 → 45 out at 1920×1152). s/frame = the pipeline call alone (no weight
+load, no LQ preparation, no PNG writing) — the same region upstream's own runner times.
+
+| s / output frame | 1280×768 | 1920×1152 |
+|---|---|---|
+| upstream FlashVSR, PyTorch-MPS bf16 (dense-attention stand-in) | 0.797 (2 arms) | 3.088 |
+| **this port, default (`auto`)** | **0.501** (= dense path) | **1.334** (1.305–1.363) |
+| this port, dense attention | 0.504 (4 arms, 0.500–0.551) | 2.901 (4 arms) |
+| this port, v0.1 kernel (4 simdgroups) | 0.834 | 1.817 |
+| this port, fp32 lane | 0.859 | — |
+| **through MLXEngine, end to end** (AVFoundation decode → bicubic → upscale → HEVC encode, the engine's 2 GiB pool cap, first-run weight page-in included; 48 frames in, 48 out) | **0.72** | **2.05–2.14** (2 runs) |
+
+So against upstream on the same machine: **1.6× faster at 1280×768 and 2.3× at 1920×1152** (where the block-sparse
+kernel is 2.17× the dense path). Peak phys is unchanged by the attention choice (bf16 runner, uncapped pool: 37 GB at
+1280×768, 71 GB at 1920×1152; the engine's capped figures are the declared ones, 17.1 / 32.5 GB).
+
+⚠️ The contended A/B this replaces (another session's LTX-2 job held the GPU at 93–99 %) had the v0.1 kernel ~10 %
+AHEAD at 1280×768; on the idle GPU it was 1.6× BEHIND dense there. Contention penalised the dense path's large GEMMs
+more than the kernel. Ratios measured under contention were not safe to carry either.
 
 ## The engine package (`MLXFlashVSR`)
 
@@ -157,7 +187,7 @@ length): bf16 resident 3.6 GB, representative activation 19.0 GB (the 1280×768 
 (the measured 7.45 GB + 11.86 KB/px of phys less the weights, ×1.2), ceiling 1920×1152; fp32 resident 7.1 GB, flat
 33.1 GB, ceiling 1280×768 (the parity lane's one measured point). `WorkloadDeclaring` reads the source geometry from
 the container's video `tkhd` box (no AVFoundation, synchronous), so the engine refuses an out-of-envelope run before
-loading weights. Wall times in these runs are contended (GPU 94–99 % busy with another session's LTX-2 jobs).
+loading weights. (Wall times for the engine path are in "Speed".)
 
 `swift test --build-system swiftbuild`: 13 package tests (MAT per precision, local source, partial directory =
 missing, licence on both layers, a `.blocking` permissive-only host registers it, footprints + ceilings, the FIT gate,
@@ -175,15 +205,11 @@ S1 sparse E2E 52.9 dB (at the floor), procedural 111.9 dB.
 
 ## Open
 
-- **Clean timing.** Every wall time above was taken while another session held the GPU at 93–99 %; ratios are
-  trustworthy (interleaved), absolutes are not. Re-measure s/frame at 1280×768 and 1920×1152 on an idle GPU
-  (`run.json` records `gpu_util_before_pct` and thermal state).
-- **Kernel tuning.** The block-sparse kernel stages K/V as fp32 in 16-key tiles; bf16 staging (32-key tiles) and
-  bf16 simdgroup MMAs (M3+) are the obvious next steps. Chunk 0 at 1280×768 (67 % density) does not yet beat dense.
+- **Kernel tuning.** The kernel stages K/V as fp32 in 16-key tiles; bf16 staging (32-key tiles) and bf16 simdgroup
+  MMAs are the next steps — they would move the `auto` crossover up and let 1280×768 use it.
 - **Decoder memory** is now the peak stage (~12 GB above the DiT's resident set at 1920×1152): spatial tiling is
   approximate because MemBlock state carries spatial context across frames.
 - **CUDA oracle** for the empty-query-block convention (billable — needs the operator's go-ahead).
-- **ForgeCore registration** (a forge-area decision: route to live action only, never anime/graphics — spike §0).
 
 ## Findings
 
