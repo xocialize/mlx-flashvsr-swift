@@ -1,0 +1,11 @@
+mlx-flashvsr-swift
+Port of FlashVSR (https://github.com/OpenImagingLab/FlashVSR @ cf910c61a60733e610e9c6e8b607f80c3a6c202b):
+  FlashVSR authors (OpenImagingLab). Licensed under the Apache License, Version 2.0.
+FlashVSR's pipeline code builds on DiffSynth-Studio (https://github.com/modelscope/DiffSynth-Studio):
+  Licensed under the Apache License, Version 2.0.
+The DiT is the Wan2.1 architecture (https://github.com/Wan-Video/Wan2.1): Licensed under the Apache License, Version 2.0.
+The TCDecoder derives from TAEHV (https://github.com/madebyollin/taehv): Copyright (c) Ollin Boer Bohan, MIT License.
+
+The FlashVSR v1.1 weights (https://huggingface.co/JunhaoZhuang/FlashVSR-v1.1) are Apache-2.0 from their authors and
+are not included in this repository. MLX-layout conversions (oracle/convert_weights.py) are published at
+https://huggingface.co/mlx-community/FlashVSR-v1.1-bf16 and https://huggingface.co/mlx-community/FlashVSR-v1.1-fp32.

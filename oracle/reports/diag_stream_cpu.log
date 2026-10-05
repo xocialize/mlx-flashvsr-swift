@@ -1,0 +1,4 @@
+  run A vs run B maxAbs 0.000e+00  ref|max| 1.347e+00  rel 0.000e+00  psnr    inf dB
+  stream vs run A maxAbs 0.000e+00  ref|max| 1.347e+00  rel 0.000e+00  psnr    inf dB
+  colourfix(stream) vs colourfix(A) maxAbs 0.000e+00  ref|max| 1.000e+00  rel 0.000e+00  psnr    inf dB
+  colourfix(stream, contiguous lq) vs (strided lq) maxAbs 1.181e-03  ref|max| 1.000e+00  rel 1.181e-03  psnr   65.5 dB

@@ -1,0 +1,87 @@
+S1 on sparse_128x96_f33.safetensors — GPU stream, fp32, attention kernel, MLX_ENABLE_TF32=0
+  const.t maxAbs 5.960e-08  ref|max| 9.244e-01  rel 6.448e-08  psnr  158.1 dB
+  const.t_mod maxAbs 2.384e-07  ref|max| 2.400e+00  rel 9.934e-08  psnr  160.2 dB
+  const.cross_k0 maxAbs 5.722e-06  ref|max| 5.842e+00  rel 9.795e-07  psnr  136.3 dB
+  const.cross_v0 maxAbs 9.537e-07  ref|max| 1.216e+00  rel 7.841e-07  psnr  149.6 dB
+  c0.lq.0 maxAbs 1.311e-06  ref|max| 1.035e+00  rel 1.267e-06  psnr  139.9 dB
+  c1.lq.0 maxAbs 1.311e-06  ref|max| 8.783e-01  rel 1.493e-06  psnr  138.0 dB
+  topk_ratio 0.8, local_range 3
+  iso c0.b0.sa_in maxAbs 1.907e-06  ref|max| 1.386e+01  rel 1.376e-07  psnr  162.4 dB
+  iso c0.b0.q maxAbs 6.676e-06  ref|max| 8.694e+00  rel 7.678e-07  psnr  152.1 dB
+  iso c0.b0.k maxAbs 9.537e-06  ref|max| 7.921e+00  rel 1.204e-06  psnr  148.9 dB
+  iso c0.b0.v maxAbs 5.722e-06  ref|max| 1.515e+01  rel 3.776e-07  psnr  150.4 dB
+  iso c0.b0.attn maxAbs 4.768e-06  ref|max| 3.631e+00  rel 1.313e-06  psnr  143.4 dB
+  iso c0.b0.sa_out maxAbs 1.431e-05  ref|max| 1.584e+01  rel 9.031e-07  psnr  150.8 dB
+  iso c0.b0.ca_in maxAbs 9.537e-06  ref|max| 2.605e+01  rel 3.661e-07  psnr  166.8 dB
+  iso c0.b0.ca_out maxAbs 2.444e-06  ref|max| 8.765e-01  rel 2.788e-06  psnr  139.8 dB
+  iso c0.b0.out maxAbs 3.052e-05  ref|max| 3.708e+01  rel 8.231e-07  psnr  162.7 dB
+  iso c0.b0 0 / 15552 blocks differ (density 0.264, empty q-rows 13)
+  iso c0.b29.sa_in maxAbs 3.815e-06  ref|max| 1.074e+01  rel 3.553e-07  psnr  159.3 dB
+  iso c0.b29.q maxAbs 4.959e-05  ref|max| 6.291e+01  rel 7.882e-07  psnr  161.5 dB
+  iso c0.b29.k maxAbs 8.392e-05  ref|max| 9.346e+01  rel 8.980e-07  psnr  162.7 dB
+  iso c0.b29.v maxAbs 5.722e-06  ref|max| 1.063e+01  rel 5.385e-07  psnr  147.0 dB
+  iso c0.b29.attn maxAbs 6.700e-05  ref|max| 9.977e+00  rel 6.715e-06  psnr  143.8 dB
+  iso c0.b29.sa_out maxAbs 4.840e-05  ref|max| 2.618e+01  rel 1.849e-06  psnr  144.5 dB
+  iso c0.b29.ca_in maxAbs 1.907e-05  ref|max| 2.679e+01  rel 7.118e-07  psnr  159.4 dB
+  iso c0.b29.ca_out maxAbs 3.004e-05  ref|max| 7.770e+00  rel 3.866e-06  psnr  149.3 dB
+  iso c0.b29.out maxAbs 8.774e-05  ref|max| 5.732e+01  rel 1.531e-06  psnr  157.9 dB
+  iso c0.b29 29 / 15552 blocks differ (density 0.252, empty q-rows 4)  flipped: 29 underflow ties (p < 1e-30), max p 0.000e+00, worst neighbour gap 0.00e+00
+  chain c0.b0.in maxAbs 1.431e-06  ref|max| 3.024e+00  rel 4.730e-07  psnr  155.5 dB   (info: sparse regime)
+  chain c0.b0.attn maxAbs 5.007e-06  ref|max| 3.631e+00  rel 1.379e-06  psnr  142.9 dB   (info: sparse regime)
+  chain c0.b0.out maxAbs 3.624e-05  ref|max| 3.708e+01  rel 9.774e-07  psnr  162.4 dB   (info: sparse regime)
+  chain c0.b0 0 / 15552 blocks differ (density 0.264, empty q-rows 13)
+  chain c0.b29.in maxAbs 3.778e-01  ref|max| 3.496e+01  rel 1.081e-02  psnr   74.5 dB   (info: sparse regime)
+  chain c0.b29.attn maxAbs 6.611e-01  ref|max| 9.977e+00  rel 6.626e-02  psnr   61.0 dB   (info: sparse regime)
+  chain c0.b29.out maxAbs 3.290e-01  ref|max| 5.732e+01  rel 5.739e-03  psnr   78.3 dB   (info: sparse regime)
+  chain c0.b29 37 / 15552 blocks differ (density 0.252, empty q-rows 4)  flipped: 29 underflow ties (p < 1e-30), max p 4.905e-02, worst neighbour gap 6.48e-03
+  chain c0.pred maxAbs 6.550e-02  ref|max| 6.643e+00  rel 9.859e-03  psnr   67.5 dB   (info: sparse regime)
+  chain c0.cache_k0 maxAbs 9.537e-06  ref|max| 7.921e+00  rel 1.204e-06  psnr  147.7 dB   (info: sparse regime)
+  chain c0.cache_v0 maxAbs 6.676e-06  ref|max| 1.515e+01  rel 4.406e-07  psnr  147.0 dB   (info: sparse regime)
+  iso c1.b0.sa_in maxAbs 2.384e-06  ref|max| 1.207e+01  rel 1.975e-07  psnr  161.2 dB
+  iso c1.b0.q maxAbs 4.292e-06  ref|max| 7.082e+00  rel 6.060e-07  psnr  150.2 dB
+  iso c1.b0.k maxAbs 9.060e-06  ref|max| 7.921e+00  rel 1.144e-06  psnr  154.8 dB
+  iso c1.b0.v maxAbs 6.676e-06  ref|max| 1.515e+01  rel 4.406e-07  psnr  156.5 dB
+  iso c1.b0.attn maxAbs 3.934e-06  ref|max| 3.308e+00  rel 1.189e-06  psnr  142.7 dB
+  iso c1.b0.sa_out maxAbs 9.537e-06  ref|max| 1.546e+01  rel 6.170e-07  psnr  150.9 dB
+  iso c1.b0.ca_in maxAbs 1.144e-05  ref|max| 2.587e+01  rel 4.424e-07  psnr  166.7 dB
+  iso c1.b0.ca_out maxAbs 2.265e-06  ref|max| 7.520e-01  rel 3.012e-06  psnr  138.7 dB
+  iso c1.b0.out maxAbs 3.052e-05  ref|max| 3.122e+01  rel 9.775e-07  psnr  161.4 dB
+  iso c1.b0 0 / 6912 blocks differ (density 0.198, empty q-rows 6)
+  iso c1.b29.sa_in maxAbs 2.384e-06  ref|max| 8.383e+00  rel 2.844e-07  psnr  156.5 dB
+  iso c1.b29.q maxAbs 3.815e-05  ref|max| 6.203e+01  rel 6.150e-07  psnr  161.4 dB
+  iso c1.b29.k maxAbs 8.392e-05  ref|max| 9.346e+01  rel 8.980e-07  psnr  162.8 dB
+  iso c1.b29.v maxAbs 5.722e-06  ref|max| 1.065e+01  rel 5.370e-07  psnr  146.9 dB
+  iso c1.b29.attn maxAbs 2.050e-05  ref|max| 1.037e+01  rel 1.977e-06  psnr  143.9 dB
+  iso c1.b29.sa_out maxAbs 2.480e-05  ref|max| 2.312e+01  rel 1.072e-06  psnr  143.1 dB
+  iso c1.b29.ca_in maxAbs 1.526e-05  ref|max| 2.107e+01  rel 7.241e-07  psnr  156.8 dB
+  iso c1.b29.ca_out maxAbs 2.670e-05  ref|max| 8.626e+00  rel 3.096e-06  psnr  149.7 dB
+  iso c1.b29.out maxAbs 6.294e-05  ref|max| 4.698e+01  rel 1.340e-06  psnr  156.4 dB
+  iso c1.b29 0 / 6912 blocks differ (density 0.188, empty q-rows 0)
+  chain c1.b0.in maxAbs 1.192e-06  ref|max| 3.027e+00  rel 3.938e-07  psnr  155.5 dB   (info: sparse regime)
+  chain c1.b0.attn maxAbs 4.411e-06  ref|max| 3.308e+00  rel 1.333e-06  psnr  142.0 dB   (info: sparse regime)
+  chain c1.b0.out maxAbs 3.624e-05  ref|max| 3.122e+01  rel 1.161e-06  psnr  161.1 dB   (info: sparse regime)
+  chain c1.b0 0 / 6912 blocks differ (density 0.198, empty q-rows 6)
+  chain c1.b29.in maxAbs 4.509e-01  ref|max| 1.764e+01  rel 2.556e-02  psnr   69.0 dB   (info: sparse regime)
+  chain c1.b29.attn maxAbs 4.377e-01  ref|max| 1.037e+01  rel 4.220e-02  psnr   60.5 dB   (info: sparse regime)
+  chain c1.b29.out maxAbs 3.038e-01  ref|max| 4.698e+01  rel 6.467e-03  psnr   76.6 dB   (info: sparse regime)
+  chain c1.b29 2 / 6912 blocks differ (density 0.188, empty q-rows 0)  flipped: 0 underflow ties (p < 1e-30), max p 4.345e-02, worst neighbour gap 1.16e-03
+  chain c1.pred maxAbs 6.468e-02  ref|max| 6.381e+00  rel 1.014e-02  psnr   67.5 dB   (info: sparse regime)
+  chain c1.cache_k0 maxAbs 9.537e-06  ref|max| 7.921e+00  rel 1.204e-06  psnr  147.7 dB   (info: sparse regime)
+  chain c1.cache_v0 maxAbs 6.676e-06  ref|max| 1.363e+01  rel 4.898e-07  psnr  146.1 dB   (info: sparse regime)
+  dec.out maxAbs 1.225e-05  ref|max| 1.195e+00  rel 1.025e-05  psnr  126.7 dB
+  E2E c0.lq.0 maxAbs 1.311e-06  ref|max| 1.035e+00  rel 1.267e-06  psnr  139.9 dB   (info)
+  E2E c0.pred maxAbs 1.423e-04  ref|max| 6.643e+00  rel 2.142e-05  psnr  129.9 dB   (info)
+  E2E c0.x_in maxAbs 0.000e+00  ref|max| 4.995e+00  rel 0.000e+00  psnr    inf dB   (info)
+  E2E c1.lq.0 maxAbs 1.311e-06  ref|max| 8.783e-01  rel 1.493e-06  psnr  138.0 dB   (info)
+  E2E c1.pred maxAbs 3.982e-05  ref|max| 6.381e+00  rel 6.240e-06  psnr  129.8 dB   (info)
+  E2E c1.x_in maxAbs 0.000e+00  ref|max| 4.979e+00  rel 0.000e+00  psnr    inf dB   (info)
+  E2E latents maxAbs 1.423e-04  ref|max| 4.039e+00  rel 3.523e-05  psnr  125.6 dB   (info)
+  E2E pre-colourfix maxAbs 3.585e-04  ref|max| 1.390e+00  rel 2.579e-04  psnr  116.3 dB   (info)
+  stream: 33 pushed → 33 out (whole-clip run emits 29)
+  stream c0.lq.0 maxAbs 1.311e-06  ref|max| 1.035e+00  rel 1.267e-06  psnr  139.9 dB   (info, vs golden)
+  stream c0.latents maxAbs 0.000e+00  ref|max| 3.963e+00  rel 0.000e+00  psnr    inf dB   (info, vs run)
+  stream c1.lq.0 maxAbs 1.311e-06  ref|max| 8.783e-01  rel 1.493e-06  psnr  138.0 dB   (info, vs golden)
+  stream c1.latents maxAbs 0.000e+00  ref|max| 4.039e+00  rel 0.000e+00  psnr    inf dB   (info, vs run)
+  stream vs run maxAbs 0.000e+00  ref|max| 1.000e+00  rel 0.000e+00  psnr    inf dB
+  E2E out.frames      psnr 113.2 dB (peak 1)  maxAbs 4.045e-04   upstream nudge floor 52.9 dB → bar 46.9 dB
+S1 PASS (70 comparisons; isolated rel ≤ 0.0001, chained rel ≤ 0.001; every isolated mask flip a near-tie; E2E at or above the upstream-relative bar)

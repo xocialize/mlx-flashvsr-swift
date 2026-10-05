@@ -1,0 +1,16 @@
+.build/
+.swiftpm/
+Package.resolved
+# oracle: everything fetched or generated is reproducible from oracle/setup_mirror.sh + the scripts
+oracle/mirror/
+oracle/weights/
+oracle/goldens/
+oracle/**/__pycache__/
+oracle/reports/**/*.png
+oracle/reports/**/*.mp4
+# weights are published separately (Apache-2.0, HF) — never committed here
+*.safetensors
+*.pth
+*.ckpt
+.DS_Store
+.build-release/

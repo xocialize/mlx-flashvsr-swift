@@ -1,0 +1,34 @@
+lq tokens golden vs port:   lq maxAbs 1.311e-06  ref|max| 1.035e+00  rel 1.267e-06  psnr  139.9 dB
+  b00 in-drift 4.34e-07  flips 0
+  b01 in-drift 6.69e-07  flips 0
+  b02 in-drift 5.35e-07  flips 0
+  b03 in-drift 9.52e-07  flips 0
+  b04 in-drift 1.16e-06  flips 0
+  b05 in-drift 9.34e-07  flips 0
+  b06 in-drift 1.76e-06  flips 0
+  b07 in-drift 1.56e-06  flips 0
+  b08 in-drift 1.97e-06  flips 0
+  b09 in-drift 4.44e-06  flips 0
+  b10 in-drift 8.87e-06  flips 0
+  b11 in-drift 1.03e-05  flips 0
+  b12 in-drift 8.14e-06  flips 0
+  b13 in-drift 1.21e-05  flips 0
+  b14 in-drift 1.87e-05  flips 0
+  b15 in-drift 3.16e-05  flips 0
+  b16 in-drift 2.44e-05  flips 2  max p at flips 4.046e-02 / 4.046e-02
+  b17 in-drift 8.47e-04  flips 0
+  b18 in-drift 8.47e-04  flips 6  max p at flips 4.099e-02 / 4.099e-02
+  b19 in-drift 1.20e-03  flips 2  max p at flips 4.662e-02 / 4.665e-02
+  b20 in-drift 5.94e-03  flips 4  max p at flips 4.989e-02 / 4.992e-02
+  b21 in-drift 2.46e-03  flips 4  max p at flips 4.803e-04 / 4.778e-04
+  b22 in-drift 1.10e-03  flips 10  max p at flips 5.039e-02 / 5.033e-02
+  b23 in-drift 7.49e-04  flips 16  max p at flips 5.125e-02 / 4.963e-02
+  b24 in-drift 1.43e-03  flips 22  max p at flips 4.941e-02 / 4.947e-02
+  b25 in-drift 2.02e-03  flips 24  max p at flips 4.865e-02 / 4.907e-02
+  b26 in-drift 1.32e-02  flips 20  max p at flips 5.107e-02 / 5.080e-02
+  b27 in-drift 1.83e-02  flips 18  max p at flips 5.091e-02 / 5.104e-02
+  b28 in-drift 1.22e-02  flips 12  max p at flips 5.276e-02 / 5.279e-02
+  b29 in-drift 1.08e-02  flips 8  max p at flips 4.916e-02 / 4.905e-02
+pred A vs B:   pred maxAbs 6.549e-02  ref|max| 6.643e+00  rel 9.859e-03  psnr   67.5 dB
+pred A vs golden:   pred maxAbs 1.442e-04  ref|max| 6.643e+00  rel 2.171e-05  psnr  130.2 dB
+pred B vs golden:   pred maxAbs 6.550e-02  ref|max| 6.643e+00  rel 9.859e-03  psnr   67.5 dB
