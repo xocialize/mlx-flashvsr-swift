@@ -40,11 +40,12 @@ converted lane directory.
 ## Install
 
 ```swift
-.package(url: "https://github.com/xocialize/mlx-flashvsr-swift", from: "0.1.0"),
+.package(url: "https://github.com/xocialize/mlx-flashvsr-swift", from: "0.1.1"),
 // products: "FlashVSRMLX" (core) and/or "MLXFlashVSR" (engine package)
 ```
 
-macOS 26, Apple silicon. Build with `--build-system swiftbuild` (the Metal library MLX needs ships with it).
+macOS 26, Apple silicon. Build with `--build-system swiftbuild` (the Metal library MLX needs ships with it). mlx-swift
+0.31.2 or newer — verified on 0.31.6 and 0.32.3 (use ≥ 0.1.1: 0.1.0 needed a 0.32-only API despite declaring 0.31).
 
 ## Use
 

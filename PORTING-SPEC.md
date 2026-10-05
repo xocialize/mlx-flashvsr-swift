@@ -165,6 +165,14 @@ workload = output pixels from a real AVFoundation-written .mov, CAN-1..3, load r
 at the 25th push and 27 for 27 in PTS order on a miniature random-weight pipeline, 8-bit pixel-buffer round trip)
 + 7 structure tests.
 
+## Compatibility
+
+`from: "0.31.2"` for mlx-swift, verified at both ends (v0.1.1): builds, 20/20 tests and both GPU S1 gates on 0.31.6 —
+where any host that also carries `mlx-seedvr2-swift` is capped (`0.31.2 ..< 0.32.0`), ForgeCore among them — and on
+0.32.3. v0.1.0 declared 0.31.0 but called `scaledDotProductAttention(…, forceFused:)`, a 0.32-only API, in the
+study-only `gathered` attention path; ForgeCore's first build found it. On 0.31.6: kernel vs dense fp32 rel ≤ 8e-7;
+S1 sparse E2E 52.9 dB (at the floor), procedural 111.9 dB.
+
 ## Open
 
 - **Clean timing.** Every wall time above was taken while another session held the GPU at 93–99 %; ratios are

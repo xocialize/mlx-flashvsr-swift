@@ -1,0 +1,87 @@
+S1 on procedural_128x96_f33.safetensors — GPU stream, fp32, attention kernel, MLX_ENABLE_TF32=0
+  const.t maxAbs 5.960e-08  ref|max| 9.244e-01  rel 6.448e-08  psnr  158.3 dB
+  const.t_mod maxAbs 2.384e-07  ref|max| 2.400e+00  rel 9.934e-08  psnr  160.1 dB
+  const.cross_k0 maxAbs 5.722e-06  ref|max| 5.842e+00  rel 9.795e-07  psnr  136.3 dB
+  const.cross_v0 maxAbs 9.537e-07  ref|max| 1.216e+00  rel 7.841e-07  psnr  149.6 dB
+  c0.lq.0 maxAbs 1.371e-06  ref|max| 1.035e+00  rel 1.325e-06  psnr  139.9 dB
+  c1.lq.0 maxAbs 1.371e-06  ref|max| 8.783e-01  rel 1.561e-06  psnr  138.0 dB
+  topk_ratio 10.0, local_range 11
+  iso c0.b0.sa_in maxAbs 1.907e-06  ref|max| 1.386e+01  rel 1.376e-07  psnr  162.3 dB
+  iso c0.b0.q maxAbs 6.676e-06  ref|max| 8.694e+00  rel 7.678e-07  psnr  152.1 dB
+  iso c0.b0.k maxAbs 9.537e-06  ref|max| 7.921e+00  rel 1.204e-06  psnr  148.9 dB
+  iso c0.b0.v maxAbs 5.722e-06  ref|max| 1.515e+01  rel 3.776e-07  psnr  150.4 dB
+  iso c0.b0.attn maxAbs 6.199e-06  ref|max| 3.594e+00  rel 1.725e-06  psnr  142.3 dB
+  iso c0.b0.sa_out maxAbs 1.335e-05  ref|max| 1.563e+01  rel 8.544e-07  psnr  150.4 dB
+  iso c0.b0.ca_in maxAbs 1.144e-05  ref|max| 2.602e+01  rel 4.398e-07  psnr  166.9 dB
+  iso c0.b0.ca_out maxAbs 2.027e-06  ref|max| 8.089e-01  rel 2.505e-06  psnr  139.4 dB
+  iso c0.b0.out maxAbs 3.242e-05  ref|max| 3.615e+01  rel 8.969e-07  psnr  162.7 dB
+  iso c0.b0 0 / 15552 blocks differ (density 0.998, empty q-rows 0)
+  iso c0.b29.sa_in maxAbs 3.815e-06  ref|max| 1.038e+01  rel 3.676e-07  psnr  159.0 dB
+  iso c0.b29.q maxAbs 5.341e-05  ref|max| 6.125e+01  rel 8.719e-07  psnr  161.4 dB
+  iso c0.b29.k maxAbs 7.629e-05  ref|max| 9.208e+01  rel 8.286e-07  psnr  162.6 dB
+  iso c0.b29.v maxAbs 6.199e-06  ref|max| 1.033e+01  rel 6.002e-07  psnr  146.7 dB
+  iso c0.b29.attn maxAbs 4.196e-05  ref|max| 1.004e+01  rel 4.181e-06  psnr  143.4 dB
+  iso c0.b29.sa_out maxAbs 2.623e-05  ref|max| 2.581e+01  rel 1.016e-06  psnr  144.0 dB
+  iso c0.b29.ca_in maxAbs 1.526e-05  ref|max| 2.729e+01  rel 5.591e-07  psnr  159.5 dB
+  iso c0.b29.ca_out maxAbs 3.576e-05  ref|max| 1.193e+01  rel 2.999e-06  psnr  152.6 dB
+  iso c0.b29.out maxAbs 1.106e-04  ref|max| 5.719e+01  rel 1.934e-06  psnr  157.7 dB
+  iso c0.b29 29 / 15552 blocks differ (density 0.929, empty q-rows 0)  flipped: 29 underflow ties (p < 1e-30), max p 0.000e+00, worst neighbour gap 0.00e+00
+  chain c0.b0.in maxAbs 1.431e-06  ref|max| 3.024e+00  rel 4.730e-07  psnr  155.5 dB
+  chain c0.b0.attn maxAbs 6.914e-06  ref|max| 3.594e+00  rel 1.924e-06  psnr  141.9 dB
+  chain c0.b0.out maxAbs 3.433e-05  ref|max| 3.615e+01  rel 9.497e-07  psnr  162.4 dB
+  chain c0.b0 0 / 15552 blocks differ (density 0.998, empty q-rows 0)
+  chain c0.b29.in maxAbs 9.403e-04  ref|max| 3.606e+01  rel 2.607e-05  psnr  138.4 dB
+  chain c0.b29.attn maxAbs 4.130e-03  ref|max| 1.004e+01  rel 4.115e-04  psnr  118.4 dB
+  chain c0.b29.out maxAbs 1.217e-03  ref|max| 5.719e+01  rel 2.128e-05  psnr  139.1 dB
+  chain c0.b29 29 / 15552 blocks differ (density 0.929, empty q-rows 0)  flipped: 29 underflow ties (p < 1e-30), max p 0.000e+00, worst neighbour gap 0.00e+00
+  chain c0.pred maxAbs 2.504e-04  ref|max| 6.604e+00  rel 3.792e-05  psnr  129.6 dB
+  chain c0.cache_k0 maxAbs 9.537e-06  ref|max| 7.921e+00  rel 1.204e-06  psnr  147.7 dB
+  chain c0.cache_v0 maxAbs 6.676e-06  ref|max| 1.515e+01  rel 4.406e-07  psnr  147.0 dB
+  iso c1.b0.sa_in maxAbs 2.384e-06  ref|max| 1.207e+01  rel 1.975e-07  psnr  161.2 dB
+  iso c1.b0.q maxAbs 4.768e-06  ref|max| 7.082e+00  rel 6.733e-07  psnr  150.2 dB
+  iso c1.b0.k maxAbs 8.106e-06  ref|max| 7.921e+00  rel 1.023e-06  psnr  154.8 dB
+  iso c1.b0.v maxAbs 6.676e-06  ref|max| 1.515e+01  rel 4.406e-07  psnr  156.5 dB
+  iso c1.b0.attn maxAbs 6.676e-06  ref|max| 3.276e+00  rel 2.038e-06  psnr  141.3 dB
+  iso c1.b0.sa_out maxAbs 1.240e-05  ref|max| 1.534e+01  rel 8.083e-07  psnr  150.5 dB
+  iso c1.b0.ca_in maxAbs 9.537e-06  ref|max| 2.586e+01  rel 3.688e-07  psnr  166.9 dB
+  iso c1.b0.ca_out maxAbs 1.967e-06  ref|max| 6.813e-01  rel 2.887e-06  psnr  138.3 dB
+  iso c1.b0.out maxAbs 3.052e-05  ref|max| 3.126e+01  rel 9.763e-07  psnr  161.4 dB
+  iso c1.b0 0 / 6912 blocks differ (density 0.998, empty q-rows 0)
+  iso c1.b29.sa_in maxAbs 2.384e-06  ref|max| 8.284e+00  rel 2.878e-07  psnr  156.4 dB
+  iso c1.b29.q maxAbs 3.433e-05  ref|max| 6.026e+01  rel 5.698e-07  psnr  161.3 dB
+  iso c1.b29.k maxAbs 7.629e-05  ref|max| 9.208e+01  rel 8.286e-07  psnr  162.7 dB
+  iso c1.b29.v maxAbs 6.199e-06  ref|max| 1.033e+01  rel 6.002e-07  psnr  146.6 dB
+  iso c1.b29.attn maxAbs 1.980e-05  ref|max| 9.968e+00  rel 1.986e-06  psnr  142.7 dB
+  iso c1.b29.sa_out maxAbs 2.289e-05  ref|max| 2.423e+01  rel 9.445e-07  psnr  143.0 dB
+  iso c1.b29.ca_in maxAbs 1.335e-05  ref|max| 2.024e+01  rel 6.598e-07  psnr  156.1 dB
+  iso c1.b29.ca_out maxAbs 2.670e-05  ref|max| 1.045e+01  rel 2.556e-06  psnr  151.5 dB
+  iso c1.b29.out maxAbs 7.057e-05  ref|max| 4.655e+01  rel 1.516e-06  psnr  156.1 dB
+  iso c1.b29 0 / 6912 blocks differ (density 0.927, empty q-rows 0)
+  chain c1.b0.in maxAbs 1.192e-06  ref|max| 3.027e+00  rel 3.938e-07  psnr  155.5 dB
+  chain c1.b0.attn maxAbs 6.437e-06  ref|max| 3.276e+00  rel 1.965e-06  psnr  140.8 dB
+  chain c1.b0.out maxAbs 3.433e-05  ref|max| 3.126e+01  rel 1.098e-06  psnr  161.2 dB
+  chain c1.b0 0 / 6912 blocks differ (density 0.998, empty q-rows 0)
+  chain c1.b29.in maxAbs 1.278e-04  ref|max| 1.789e+01  rel 7.143e-06  psnr  133.6 dB
+  chain c1.b29.attn maxAbs 5.293e-05  ref|max| 9.968e+00  rel 5.310e-06  psnr  127.0 dB
+  chain c1.b29.out maxAbs 9.727e-05  ref|max| 4.655e+01  rel 2.090e-06  psnr  141.4 dB
+  chain c1.b29 0 / 6912 blocks differ (density 0.927, empty q-rows 0)
+  chain c1.pred maxAbs 1.121e-05  ref|max| 6.551e+00  rel 1.711e-06  psnr  131.5 dB
+  chain c1.cache_k0 maxAbs 9.537e-06  ref|max| 7.921e+00  rel 1.204e-06  psnr  147.7 dB
+  chain c1.cache_v0 maxAbs 6.676e-06  ref|max| 1.363e+01  rel 4.898e-07  psnr  146.1 dB
+  dec.out maxAbs 7.868e-06  ref|max| 1.174e+00  rel 6.703e-06  psnr  127.7 dB
+  E2E c0.lq.0 maxAbs 1.371e-06  ref|max| 1.035e+00  rel 1.325e-06  psnr  139.9 dB   (info)
+  E2E c0.pred maxAbs 2.494e-04  ref|max| 6.604e+00  rel 3.776e-05  psnr  129.6 dB   (info)
+  E2E c0.x_in maxAbs 0.000e+00  ref|max| 4.995e+00  rel 0.000e+00  psnr    inf dB   (info)
+  E2E c1.lq.0 maxAbs 1.371e-06  ref|max| 8.783e-01  rel 1.561e-06  psnr  138.0 dB   (info)
+  E2E c1.pred maxAbs 1.216e-05  ref|max| 6.551e+00  rel 1.856e-06  psnr  131.7 dB   (info)
+  E2E c1.x_in maxAbs 0.000e+00  ref|max| 4.979e+00  rel 0.000e+00  psnr    inf dB   (info)
+  E2E latents maxAbs 2.494e-04  ref|max| 4.279e+00  rel 5.827e-05  psnr  126.2 dB   (info)
+  E2E pre-colourfix maxAbs 5.358e-04  ref|max| 1.347e+00  rel 3.977e-04  psnr  114.5 dB   (info)
+  stream: 33 pushed → 33 out (whole-clip run emits 29)
+  stream c0.lq.0 maxAbs 1.371e-06  ref|max| 1.035e+00  rel 1.325e-06  psnr  139.9 dB   (info, vs golden)
+  stream c0.latents maxAbs 0.000e+00  ref|max| 4.022e+00  rel 0.000e+00  psnr    inf dB   (info, vs run)
+  stream c1.lq.0 maxAbs 1.371e-06  ref|max| 8.783e-01  rel 1.561e-06  psnr  138.0 dB   (info, vs golden)
+  stream c1.latents maxAbs 0.000e+00  ref|max| 4.279e+00  rel 0.000e+00  psnr    inf dB   (info, vs run)
+  stream vs run maxAbs 0.000e+00  ref|max| 1.000e+00  rel 0.000e+00  psnr    inf dB
+  E2E out.frames      psnr 111.9 dB (peak 1)  maxAbs 6.033e-04   upstream nudge floor 115.7 dB → bar 90.0 dB
+S1 PASS (70 comparisons; isolated rel ≤ 0.0001, chained rel ≤ 0.001; every isolated mask flip a near-tie; E2E at or above the upstream-relative bar)

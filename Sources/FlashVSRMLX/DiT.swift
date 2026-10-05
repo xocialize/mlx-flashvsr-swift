@@ -243,8 +243,10 @@ func gatheredBlockAttention(q: MLXArray, k: MLXArray, v: MLXArray, blockMask: ML
             let valid = MLXArray(0 ..< Int32(maxC)).reshaped([1, maxC]) .< cnt              // (n, maxC)
             let keyMask = broadcast(valid.reshaped([n, maxC, 1]), to: [n, maxC, 128])
                 .reshaped([n, 1, 1, maxC * 128])
+            // the plain array-mask overload: `forceFused:` exists only from mlx-swift 0.32, and this package must build on
+            // 0.31.x (SeedVR2 caps hosts like ForgeCore at < 0.32). The 2–4× A/B below was measured with fused forced.
             var o = MLXFast.scaledDotProductAttention(queries: qh[g0 ..< g1], keys: kg, values: vg, scale: scale,
-                                                      mask: .array(keyMask), forceFused: true)
+                                                      mask: keyMask)
             o = MLX.where(cnt.reshaped([n, 1, 1, 1]) .> 0, o, MLXArray(Float(0)).asType(o.dtype))
             parts.append(o)
             g0 = g1

@@ -20,7 +20,9 @@ let package = Package(
         .executable(name: "flashvsr-smoke", targets: ["FlashVSRSmoke"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/ml-explore/mlx-swift", from: "0.31.0"),
+        // 0.31.2 floor, verified at both ends: builds, tests and passes the GPU gates on 0.31.6 (where hosts carrying
+        // mlx-seedvr2-swift are capped, < 0.32) and on 0.32.3. v0.1.0 declared 0.31.0 but used a 0.32-only API.
+        .package(url: "https://github.com/ml-explore/mlx-swift", from: "0.31.2"),
         .package(url: "https://github.com/xocialize/mlx-engine-swift", from: "0.63.0"),
         .package(url: "https://github.com/xocialize/frame-stream-native.git", from: "0.4.0"),
     ],
